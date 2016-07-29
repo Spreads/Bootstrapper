@@ -180,24 +180,24 @@ namespace Spreads {
             string path = Path.Combine(Bootstrapper.Instance.TempFolder, split.Last());
 
             try {
-            Assembly assembly = typeof(T).Assembly;
-            using (Stream resourceStream = assembly.GetManifestResourceStream(resource)) {
-                using (DeflateStream deflateStream = new DeflateStream(resourceStream, CompressionMode.Decompress)) {
-                    using (
-                        FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write,
-                            FileShare.ReadWrite)) {
-                        byte[] buffer = new byte[1048576];
-                        int bytesRead;
-                        do {
-                            bytesRead = deflateStream.Read(buffer, 0, buffer.Length);
-                            if (bytesRead != 0)
-                                fileStream.Write(buffer, 0, bytesRead);
+                Assembly assembly = typeof(T).Assembly;
+                using (Stream resourceStream = assembly.GetManifestResourceStream(resource)) {
+                    using (DeflateStream deflateStream = new DeflateStream(resourceStream, CompressionMode.Decompress)) {
+                        using (
+                            FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write,
+                                FileShare.ReadWrite)) {
+                            byte[] buffer = new byte[1048576];
+                            int bytesRead;
+                            do {
+                                bytesRead = deflateStream.Read(buffer, 0, buffer.Length);
+                                if (bytesRead != 0)
+                                    fileStream.Write(buffer, 0, bytesRead);
+                            }
+                            while (bytesRead != 0);
                         }
-                        while (bytesRead != 0);
                     }
                 }
-            }
-            return path;
+                return path;
             } catch {
                 File.Delete(path);
                 return null;
@@ -226,7 +226,7 @@ namespace Spreads {
             }
 
             try {
-                Assembly assembly = typeof (T).Assembly;
+                Assembly assembly = typeof(T).Assembly;
                 using (Stream resourceStream = assembly.GetManifestResourceStream(resource)) {
                     using (DeflateStream deflateStream = new DeflateStream(resourceStream, CompressionMode.Decompress)) {
                         using (
@@ -243,41 +243,32 @@ namespace Spreads {
                         }
                     }
                 }
-            }
-            catch {
-                
+            } catch {
+
             }
             return path;
         }
 
 
-        public static Assembly LoadManagedDll<T>(string name)
-        {
+        public static Assembly LoadManagedDll<T>(string name) {
             // [os/][arch/]name.extension
             var split = name.Split('/');
             string path = null;
-            if (split.Length == 1)
-            {
+            if (split.Length == 1) {
                 // name.extension
                 path = Path.Combine(Bootstrapper.Instance.AppFolder, split[0]);
-            }
-            else
-            {
+            } else {
                 throw new ArgumentException("wrong resource name");
             }
 
             Assembly assembly = typeof(T).Assembly;
-            using (Stream resourceStream = assembly.GetManifestResourceStream(name))
-            {
-                using (DeflateStream deflateStream = new DeflateStream(resourceStream, CompressionMode.Decompress))
-                {
+            using (Stream resourceStream = assembly.GetManifestResourceStream(name)) {
+                using (DeflateStream deflateStream = new DeflateStream(resourceStream, CompressionMode.Decompress)) {
                     using (
-                        MemoryStream ms = new MemoryStream())
-                    {
+                        MemoryStream ms = new MemoryStream()) {
                         byte[] buffer = new byte[1048576];
                         int bytesRead;
-                        do
-                        {
+                        do {
                             bytesRead = deflateStream.Read(buffer, 0, buffer.Length);
                             if (bytesRead != 0)
                                 ms.Write(buffer, 0, bytesRead);
@@ -292,7 +283,7 @@ namespace Spreads {
 
 
         public static void CompressResource(string path) {
-            using (FileStream inFileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None)) {
+            using (FileStream inFileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                 using (
                     FileStream outFileStream = new FileStream(path + ".compressed", FileMode.Create, FileAccess.Write,
                         FileShare.ReadWrite)) {
@@ -330,8 +321,7 @@ namespace Spreads {
             //}
             try {
                 ZipFile.ExtractToDirectory(path, targetPath);
-            }
-            catch(IOException e) {
+            } catch (IOException e) {
                 Console.WriteLine(e.ToString());
             }
         }

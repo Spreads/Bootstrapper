@@ -63,14 +63,6 @@
     <Compile Include="Version.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\..\lib\msvcrt\x32\msvcrt.zip">
-      <Link>native\win\x32\msvcrt.zip</Link>
-      <LogicalName>win/x32/msvcrt.zip</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\..\lib\msvcrt\x64\msvcrt.zip">
-      <Link>native\win\x64\msvcrt.zip</Link>
-      <LogicalName>win/x64/msvcrt.zip</LogicalName>
-    </EmbeddedResource>
     <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

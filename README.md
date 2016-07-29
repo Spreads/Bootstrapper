@@ -15,6 +15,7 @@ It does the job well for native libraries, but all other functionality is in alp
 
 See [this file](https://github.com/Spreads/Bootstrapper/blob/master/src/Bootstrapper/Bootstrapper.cs) for usage example.
 
+
 Licence
 --------
 New BSD license (AKA 3-clause BSD)

@@ -1,10 +1,27 @@
-﻿using System;
+﻿/*
+    Copyright(c) 2014-2016 Victor Baybekov.
+
+    This file is a part of Spreads library.
+
+    Spreads library is free software; you can redistribute it and/or modify it under
+    the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+
+    Spreads library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.If not, see<http://www.gnu.org/licenses/>.
+*/
+
+using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Reflection;
 
 namespace Spreads {
@@ -12,27 +29,168 @@ namespace Spreads {
 
     public static class Program {
 
-        // when running as console app, init Bootstrapper
-        static Program() {
-            Console.WriteLine(Bootstrapper.Instance.AppFolder);
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void Main(string[] args) {
+            Run(args);
         }
 
-        public static void Main() {
-            // dll must be compressed by running this project as .exe
+        private static void Run(string[] args, bool interactive = false) {
+            if (args == null || args.Length == 0) {
+                string line = null;
+                do {
+                    Console.WriteLine("Compress individual files: filePath1 ... filePathN");
+                    //Console.WriteLine("Compress directories: -d dirPath1 ... dirPathN");
+                    Console.WriteLine("Compress files by pattern: -p pattern dirPath1 ... dirPathN");
+                    line = Console.ReadLine();
+                }
+                while (string.IsNullOrWhiteSpace(line));
+                try {
+                    Run(line.Split(' '), true);
+                    Console.WriteLine("Completed successfully");
+                } catch (Exception e) {
+                    Console.WriteLine("Error: " + e.ToString());
+                }
+                Run(null, true);
+            } else {
+                // directory
+                //if (args[0].ToLower().Trim() == "-d") {
+                //    if (args.Length < 2) {
+                //        var msg = "You must provide at least one directory";
+                //        if (interactive) {
+                //            Console.ForegroundColor = ConsoleColor.Red;
+                //            Console.WriteLine(msg);
+                //            Console.ResetColor();
+                //            Run(null, true);
+                //        } else {
+                //            throw new ArgumentException(msg);
+                //        }
+                //    }
+                //    for (int i = 1; i < args.Length; i++) {
+                //        Loader.CompressFolder(args[i]);
+                //        Console.ForegroundColor = ConsoleColor.Yellow;
+                //        Console.WriteLine($"Compressed directory: {args[i]}");
+                //        Console.ResetColor();
+                //    }
+                //    if (interactive) {
+                //        Run(null, true);
+                //    } else {
+                //        return;
+                //    }
 
-            //Loader.CompressResource(@"Path to dll");
-            //Loader.CompressFolder(@"Path to folder");
-            //Loader.ExtractFolder(@"... \lib\msvcrt\x64.zip", @"destination path");
-            
-            Console.ReadLine();
+                //}
+
+                // pattern
+                if (args[0].ToLower().Trim() == "-p") {
+                    if (args.Length < 2) {
+                        var msg = "You must provide a search pattern";
+                        if (interactive) {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(msg);
+                            Console.ResetColor();
+                            Console.WriteLine();
+                            Run(null, true);
+                        } else {
+                            throw new ArgumentException(msg);
+                        }
+                    }
+                    var pattern = args[1];
+                    if (args.Length < 3) {
+                        var list = args.ToList();
+                        var assemblyFolder = ".";
+                        list.Add(assemblyFolder);
+                        args = list.ToArray();
+                    }
+                    var count = 0;
+
+                    for (int i = 2; i < args.Length; i++) {
+                        var path = args[i];
+                        if (!Directory.Exists(path)) {
+                            var msg = $"Directory '{path}' does not exists";
+                            if (interactive) {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine(msg);
+                                Console.ResetColor();
+                                Console.WriteLine();
+                                Run(null, true);
+                            } else {
+                                throw new ArgumentException(msg);
+                            }
+                        }
+
+                        var files = Directory.GetFiles(path, pattern, SearchOption.AllDirectories);
+                        foreach (var file in files) {
+                            Loader.CompressResource(file);
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine($"Compressed file: '{file}'");
+                            Console.ResetColor();
+                            count++;
+                        }
+                    }
+
+                    if (count == 0) {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("No matching files");
+                        Console.ResetColor();
+                        Console.WriteLine();
+                    }
+
+                    if (interactive) {
+                        Run(null, true);
+                    } else {
+                        return;
+                    }
+                }
+
+                // single files
+                if (args.Length < 1) {
+                    var msg = "You must provide at least one file";
+                    if (interactive) {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(msg);
+                        Console.ResetColor();
+                        Run(null, true);
+                    } else {
+                        throw new ArgumentException(msg);
+                    }
+                }
+
+
+                foreach (var file in args) {
+                    if (!File.Exists(file)) {
+                        var msg = $"File '{file}' does not exists";
+                        if (interactive) {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(msg);
+                            Console.ResetColor();
+                            Console.WriteLine();
+                            Run(null, true);
+                        } else {
+                            throw new ArgumentException(msg);
+                        }
+                    }
+
+                    Loader.CompressResource(file);
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Compressed file: '{file}'");
+                    Console.ResetColor();
+                }
+
+                if (interactive) {
+                    Run(null, true);
+                }
+            }
         }
     }
 
     public class Bootstrapper {
 
         private static readonly Bootstrapper instance = new Bootstrapper();
-        public static Bootstrapper Instance {
-            get {
+        public static Bootstrapper Instance
+        {
+            get
+            {
                 return instance;
             }
         }
@@ -41,7 +199,7 @@ namespace Spreads {
         // Those dlls could contain other embedded dlls, which are extracted recursively as Russian dolls.
         // Bootstrapper overwrites existing files 
 
-        
+
 
         static Bootstrapper() {
 
@@ -53,24 +211,24 @@ namespace Spreads {
                 null,
                 () => {
 #if DEBUG
-                    Console.WriteLine("Pre-copy action");
+                    //Console.WriteLine("Pre-copy action");
 #endif
                 },
                 () => {
-                //Yeppp.Library.Init();
+                    //Yeppp.Library.Init();
 #if DEBUG
-                Console.WriteLine("Post-copy action");
+                    //Console.WriteLine("Post-copy action");
 #endif
                 },
                 () => {
-                //Yeppp.Library.Release();
-            });
-
-            AppDomain.CurrentDomain.AssemblyResolve +=
-                new ResolveEventHandler((object sender, ResolveEventArgs args) => {
-                    var an = new AssemblyName(args.Name);
-                    return instance.managedLibraries[an.Name + ".dll"];
+                    //Yeppp.Library.Release();
                 });
+
+            //AppDomain.CurrentDomain.AssemblyResolve +=
+            //    new ResolveEventHandler((object sender, ResolveEventArgs args) => {
+            //        var an = new AssemblyName(args.Name);
+            //        return instance.managedLibraries[an.Name + ".dll"];
+            //    });
             //new ResolveEventHandler(Loader.ResolveManagedAssembly);
         }
 
@@ -127,8 +285,10 @@ namespace Spreads {
 
 
 
-        public string AssemblyDirectory {
-            get {
+        public string AssemblyDirectory
+        {
+            get
+            {
                 string codeBase = Assembly.GetExecutingAssembly().CodeBase;
                 UriBuilder uri = new UriBuilder(codeBase);
                 string path = Uri.UnescapeDataString(uri.Path);
@@ -136,39 +296,51 @@ namespace Spreads {
             }
         }
 
-        internal string BaseFolder {
-            get {
+        internal string BaseFolder
+        {
+            get
+            {
                 return _baseFolder;
             }
-            set {
+            set
+            {
                 _baseFolder = value;
             }
         }
 
-        internal string ConfigFolder {
-            get {
+        internal string ConfigFolder
+        {
+            get
+            {
                 return Path.Combine(_baseFolder, rootFolder, configSubFolder);
             }
         }
 
-        internal string AppFolder {
-            get {
+        internal string AppFolder
+        {
+            get
+            {
                 return Path.Combine(_baseFolder, rootFolder, appSubFolder);
             }
         }
 
-        internal string DataFolder {
-            get {
+        internal string DataFolder
+        {
+            get
+            {
                 return _dataFolder;
             }
-            set {
+            set
+            {
                 _dataFolder = value;
             }
         }
 
         private string _tmpFolder = null;
-        internal string TempFolder {
-            get {
+        internal string TempFolder
+        {
+            get
+            {
                 if (_tmpFolder == null) {
                     _tmpFolder = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                 }
